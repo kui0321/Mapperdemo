@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wsk.mapper.UsersMapper">
+<!--    开启二级缓存-->
+    <cache/>
+
+    <sql id="usersColumns">
+        userid, username, usersex
+    </sql>
+<!--    查询所有用户-->
+    <select id="selectUsersAll" resultType="users">
+        select <include refid="usersColumns" /> from users;
+    </select>
+<!--    根据用户ID查询用户-->
+    <select id="selectUsersById" resultType="users">
+        select <include refid="usersColumns" /> from users where userid = #{userid};
+    </select>
+<!--    使用顺序传参法，根据用户姓名与性别查询用户-->
+    <select id="selectUsersOrderParam" resultType="users">
+        select <include refid="usersColumns" /> from users where username = #{arg0} and usersex = #{arg1}
+    </select>
+<!--    使用@Param注解传参法， 根据用户姓名与性别查询用户-->
+    <select id="selectUsersAnnParam" resultType="users">
+        select <include refid="usersColumns" /> from users where username = #{name} and usersex = #{sex}
+    </select>
+<!--    使用Pojo传参法，根据用户姓名与性别查询用户-->
+    <select id="selectUsersPojoParam" resultType="users">
+        select <include refid="usersColumns" /> from users where username = #{username} and usersex = #{usersex}
+    </select>
+<!--    使用Map传参法，根据用户姓名与性别查询用户-->
+    <select id="selectUsersMapParam" resultType="users" >
+        select <include refid="usersColumns" /> from users where username = #{keyname} and usersex = #{keysex}
+    </select>
+    <!--    处理特殊字符-->
+    <select id="selectUsers" resultType="users">
+        select <include refid="usersColumns" /> from users where userid &gt; #{userid}
+    </select>
+
+<!--&lt;!&ndash;    使用CDATA区处理特殊字符&ndash;&gt;-->
+<!--    <select id="selectUsers" resultType="users">-->
+<!--        select <include refid="usersColumns" /> from users where userid <![CDATA[>]]> #{userid}-->
+<!--    </select>-->
+
+<!--    使用RowBounds实现分页，查询所有用户-->
+    <select id="selectUsersRowBound" resultType="users">
+        select <include refid="usersColumns" /> from users;
+    </select>
+
+<!--    使用limit分页查询所有数据-->
+    <select id="selectUsersLimit" resultType="users">
+        select <include refid="usersColumns" /> from users limit #{offset},#{limit}
+    </select>
+
+<!--    添加用户-->
+   <insert id="insertUsers">
+       insert into users values (default , #{username}, #{usersex});
+   </insert>
+
+<!--获取自增主键值，添加用户-->
+    <insert id="insertUsersGetKey" useGeneratedKeys="true" keyProperty="userid">
+        insert into users values (default , #{username}, #{usersex});
+    </insert>
+<!--    获取非自增主键，添加用户-->
+    <insert id="insertUsersGetByKey">
+        <selectKey order="BEFORE" keyProperty="userid" resultType="int">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+        insert into users values (default , #{username}, #{usersex});
+    </insert>
+
+<!--    根据用户给定条件查询-->
+    <select id="selectUsersByProperty" resultType="users">
+        select  * from users where 1=1
+        <if test="userid != 0">
+            and userid = #{userid}
+        </if>
+        <if test="username != null and username != ''">
+            and username = #{username}
+        </if>
+        <if test="usersex != null and usersex != ''">
+            and usersex = #{usersex}
+        </if>
+    </select>
+<!--where标签，根据给定数据查询-->
+    <select id="selectUsersByChose" resultType="users">
+        select * from users where 1=1
+        <choose>
+            <when test="username != null and username != ''">
+                and username = #{username}
+            </when>
+            <when test="usersex != null and usersex != ''">
+                and usersex = #{usersex}
+            </when>
+            <otherwise>
+                and userid = 1
+            </otherwise>
+        </choose>
+    </select>
+
+<!--    bind标签-->
+    <select id="selectUsersByLikeName" resultType="users">
+        <bind name="likename" value="'%'+name+'%'"/>
+        select * from users where username like #{likename}
+    </select>
+
+<!--    选择更新-->
+    <update id="usersUpdate">
+        UPDATE users
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="usersex != null and usersex != ''">
+                usersex = #{usersex},
+            </if>
+        </set>
+        where userid = #{userid}
+    </update>
+<!--查询ID为1或者2的用户-->
+    <select id="selectUsersByIdUseCollection" resultType="users">
+        select * from users where userid in
+        <foreach collection="collection" item="userid" open="(" separator="," close=")">
+            #{userid}
+        </foreach>
+
+    </select>
+<!--    使用数组传参查询用户ID为1或者2的用户-->
+    <select id="selectUsersByIdUseArray" resultType="users">
+        select * from users where userid in
+        <foreach collection="array" item="userid" open="(" separator="," close=")">
+            #{userid}
+        </foreach>
+    </select>
+
+<!--    根据给定条件做计数处理-->
+    <select id="selectUsersCount" resultType="int" >
+        select * from users where
+        <foreach collection="userid" separator="and" item="value" index="key">
+            ${key} = #{value}
+        </foreach>
+    </select>
+
+<!--    批量添加用户-->
+    <insert id="insertUsersBatch">
+        insert into users  values
+        <foreach collection="collection" item="user" separator="," >
+            (default ,#{user.username} ,#{user.usersex})
+        </foreach>
+    </insert>
+<!--    -->
+</mapper>
